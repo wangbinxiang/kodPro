@@ -1,0 +1,5 @@
+export const ADD_TODO = 'ADD_TODO';
+export const SET_VISIBILITY_FILTER = 'SET_VISIBILITY_FILTER';
+export const TOGGLE_TODO = 'TOGGLE_TODO';
+export const REQUEST_TODO_ID = 'REQUEST_TODO_ID';
+export const RECEIVE_TODO_ID = 'RECEIVE_TODO_ID';
