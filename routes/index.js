@@ -1,13 +1,23 @@
 import Router from 'koa-router';
 import fetch from 'node-fetch';
 import sendFile from 'koa-sendfile';
-
+import ReactDOM from 'react-dom/server';
 import React from 'react';
 import { renderToString } from 'react-dom/server';
 import { Provider } from 'react-redux';
 import { createStore } from 'redux';
 import todoApp from '../src/reducers';
 import App from '../src/components/App';
+import Html from '../src/helpers/Html';
+
+import match from '../src/helpers/match';
+
+import createHistory from 'react-router/lib/createMemoryHistory';
+
+import routerCreateStore from '../src/createStore';
+import { syncHistoryWithStore } from 'react-router-redux';
+import routerRoutes from '../src/routes';
+import { ReduxAsyncConnect, loadOnServer } from 'redux-async-connect';
 
 async function getTitle(url) {
   let response = await fetch(url);
@@ -78,13 +88,40 @@ export default (app) => {
 
         let store = createStore(todoApp, initialState);
 
-        const content = renderToString(
+        // const content = renderToString(
+        //     <Provider store={store}>
+        //         <App />
+        //     </Provider>
+        // );
+        // ctx.body = generatePage(content, store.getState());
+
+        const component = (
             <Provider store={store}>
                 <App />
             </Provider>
         );
+        ctx.body = '<!doctype html>\n' +
+        ReactDOM.renderToString(<Html assets={webpackIsomorphicTools.assets()} component={component} store={store}/>);
+    });
 
-        ctx.body = generatePage(content, store.getState());
+
+    router.get('/router', async (ctx, next) => {
+
+        const memoryHistory = createHistory(ctx.url);//生成history
+        const store = routerCreateStore(memoryHistory);
+        const history = syncHistoryWithStore(memoryHistory, store);
+
+
+
+        const { error, redirectLocation, renderProps } = await match({ history, routes: routerRoutes(store), location: ctx.url});
+
+        await loadOnServer({ ...renderProps, store });
+
+        const component = (
+            <Provider store={store} key="provider">
+                <ReduxAsyncConnect {...renderProps} />
+            </Provider>
+        );
     });
 
 

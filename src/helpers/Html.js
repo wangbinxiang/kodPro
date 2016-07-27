@@ -1,15 +1,14 @@
 import React, {Component, PropTypes} from 'react';
 import ReactDOM from 'react-dom/server';
-import serialize from 'serialize-javascript';
 import Helmet from 'react-helmet';
 
 
 
 export default class Html extends Component {
     static propTypes = {
-        assets: PropTypes.object,
-        component: PropTypes.node,
-        store: PropTypes.object
+      assets: PropTypes.object,
+      component: PropTypes.node,
+      store: PropTypes.object
     };
 
     render() {
@@ -33,7 +32,11 @@ export default class Html extends Component {
                         return <link href={assets.styles[style]} key={key} media="screen, projection" rel="stylesheet" type="text/css" charSet="UTF-8" />
                     })}
                 </head>
-                    <div id="content" dangerouslySetInnerHTML={{__html: content}}
+                <body>
+                    <div id="content" dangerouslySetInnerHTML={{__html: content}} />
+                    <script dangerouslySetInnerHTML={{__html: `window.__INITIAL_STATE__=${JSON.stringify(store.getState())};`}} charSet="UTF-8" />
+                    <script src={assets.javascript.main} charSet="UTF-8" />
+                </body>
             </html>
         );
     }
