@@ -5,7 +5,7 @@ import App from './components/App';
 export default (store) => {
 
     return (
-        <Route path="/" component={App}>
+        <Route path="/router" component={App}>
 
 
         </Route>

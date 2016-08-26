@@ -6,6 +6,9 @@ import todoApp from './reducers';
 import App from './components/App';
 import fetch from 'isomorphic-fetch';
 
+if (module.hot) {
+    module.hot.accept()
+}
 
 let store = createStore(todoApp, window.__INITIAL_STATE__);
 
@@ -15,8 +18,6 @@ render(
     </Provider>,
     document.getElementById('content')
 );
-
-
 // webpack entry 添加 babel-polyfill 客户端就可以使用async
 // async function getTitle(url) {
 //   let response = await fetch(url);

@@ -3,6 +3,7 @@ import koaStatic from 'koa-static';
 import convert from 'koa-convert';
 import path from 'path';
 import webpack from 'webpack';
+import webpackHotMiddleware from 'koa-webpack-hot-middleware';
 import webpackDevMiddleware from 'koa-webpack-dev-middleware';
 import webpackConfig from './webpack.config.babel'
 import co from 'co';
@@ -86,12 +87,17 @@ const opts = {
     // 会优先传输index.js.gz，默认开启
 };
 
+const compiler = webpack(webpackConfig);
+
 app.use(convert(koaStatic(path.join(__dirname + 'public'), opts)));
 
-app.use(convert(webpackDevMiddleware(webpack(webpackConfig), { noInfo: true, publicPath: '/static/' })));
+app.use(convert(webpackDevMiddleware(
+    compiler, { noInfo: true, publicPath: webpackConfig.output.publicPath })
+));
+app.use(convert(webpackHotMiddleware(compiler)));
+
 
 router(app);
-
 
 
 // app.use(async (ctx) => {

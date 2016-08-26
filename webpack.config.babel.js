@@ -11,8 +11,7 @@ export default {
     context: __dirname,
     entry: {
          'main': [
-          'babel-polyfill',
-          'webpack/hot/only-dev-server',
+          'webpack-hot-middleware/client?path=/__webpack_hmr&timeout=20000',
           './src/index'
         ]
     },
@@ -26,15 +25,19 @@ export default {
         new webpack.optimize.OccurenceOrderPlugin(),
         new webpack.HotModuleReplacementPlugin(),
         new ExtractTextPlugin('[name]-[chunkhash].css', {allChunks: true}),
-        webpackIsomorphicToolsPlugin
+        new webpack.NoErrorsPlugin(),
+        webpackIsomorphicToolsPlugin.development()
     ],
     module: {
         loaders: [
             {
                 test: /\.js$/,
-                loaders: [ 'babel' ],
+                loader: 'babel',
                 exclude: /node_modules/,
-                include: __dirname
+                include: __dirname,
+                query: {
+                    'presets': ['react-hmre']
+                }
             },
             { 
                 test: /\.scss$/, 

@@ -1,10 +1,13 @@
 import { combineReducers } from 'redux';
+import { routerReducer } from 'react-router-redux';
+import {reducer as reduxAsyncConnect} from 'redux-connect';
 import todos from './todos';
 import visibilityFilter from './visibilityFilter';
 
-const todoApp = combineReducers({
+export default combineReducers({
+    routing: routerReducer,
+    reduxAsyncConnect,
     todos,
     visibilityFilter
 });
 
-export default todoApp;

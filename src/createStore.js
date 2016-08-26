@@ -10,9 +10,9 @@ export default function createStore(history, data) {
 
     finalCreateStore = applyMiddleware(...middleware)(_createStore);
 
-    const reducer = require('./reducers/index');
-
-    const store = finalCreateStore(reducer, data);
+    const reducer = require('./reducers');
+    console.log(reducer.default);
+    const store = finalCreateStore(reducer.default, data);
 
     return store;
 }

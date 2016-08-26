@@ -6,6 +6,7 @@ import React from 'react';
 import { renderToString } from 'react-dom/server';
 import { Provider } from 'react-redux';
 import { createStore } from 'redux';
+import { RouterContext } from 'react-router';
 import todoApp from '../src/reducers';
 import App from '../src/components/App';
 import Html from '../src/helpers/Html';
@@ -17,7 +18,7 @@ import createHistory from 'react-router/lib/createMemoryHistory';
 import routerCreateStore from '../src/createStore';
 import { syncHistoryWithStore } from 'react-router-redux';
 import routerRoutes from '../src/routes';
-import { ReduxAsyncConnect, loadOnServer } from 'redux-async-connect';
+import { ReduxAsyncConnect, loadOnServer } from 'redux-connect';
 
 async function getTitle(url) {
   let response = await fetch(url);
@@ -27,7 +28,7 @@ async function getTitle(url) {
 
 const generatePage = (content, state, options = {
   title: 'SSR Demo',
-}) => `
+}, val) => `
 <!DOCTYPE html>
 <html>
   <head>
@@ -36,7 +37,20 @@ const generatePage = (content, state, options = {
   <body>
     <div id="root">${content}</div>
     <script>window.__INITIAL_STATE__ = ${JSON.stringify(state)};</script>
-    <script src="/static/bundle.js"></script>
+    <script src="${val.main}"></script>
+  </body>
+</html>
+`;
+
+const hotView = (main) => `
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>hot view</title>
+  </head>
+  <body>
+    <div id="content"></div>
+    <script src="${main}"></script>
   </body>
 </html>
 `;
@@ -66,10 +80,16 @@ export default (app) => {
     })
 
     router.get("/index", async (ctx, next) => {
-        const status = await sendFile(ctx, 'views/index.html');
-        if (!ctx.status) {
-            ctx.throw(404);
-        };
+        webpackIsomorphicTools.refresh();
+        
+        const main = webpackIsomorphicTools.assets().javascript.main;
+
+        ctx.body = hotView(main);
+
+        // const status = await sendFile(ctx, 'views/index.html');
+        // if (!ctx.status) {
+        //     ctx.throw(404);
+        // };
     })
 
 
@@ -111,7 +131,27 @@ export default (app) => {
         const store = routerCreateStore(memoryHistory);
         const history = syncHistoryWithStore(memoryHistory, store);
 
+        const { error, redirectLocation, renderProps } = await match({ history, routes: routerRoutes(store), location: ctx.url});
 
+        await loadOnServer({ ...renderProps, store });
+
+        const component = (
+            <Provider store={store} key="provider">
+                <ReduxAsyncConnect {...renderProps} />
+            </Provider>
+        );
+
+        // console.log(ReactDOM.renderToString(component));
+
+        ctx.body = '<!doctype html>\n' +
+        ReactDOM.renderToString(<Html assets={webpackIsomorphicTools.assets()} component={component} store={store}/>);
+    });
+
+
+    router.get('/example' , async (ctx, next) => {
+        const memoryHistory = createHistory(ctx.url);//生成history
+        const store = routerCreateStore(memoryHistory);
+        const history = syncHistoryWithStore(memoryHistory, store);
 
         const { error, redirectLocation, renderProps } = await match({ history, routes: routerRoutes(store), location: ctx.url});
 
@@ -122,7 +162,12 @@ export default (app) => {
                 <ReduxAsyncConnect {...renderProps} />
             </Provider>
         );
-    });
+
+        // console.log(ReactDOM.renderToString(component));
+
+        ctx.body = '<!doctype html>\n' +
+        ReactDOM.renderToString(<Html assets={webpackIsomorphicTools.assets()} component={component} store={store}/>);
+    })
 
 
     app.use(router.routes());
